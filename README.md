@@ -136,3 +136,87 @@ Required secrets:
 - `OPENCLAW_GH_TOKEN`: GitHub token with write access to `openclaw/openclaw` issues and PRs.
 
 The workflow logs Codex in with `OPENAI_API_KEY`, then runs review shards without OpenAI or Codex API key environment variables. `codex exec` uses the prepared login state, and the shard fails instead of writing fallback review markdown if Codex auth/output fails. It uses `OPENCLAW_GH_TOKEN` for `openclaw/openclaw` comments/closes. The built-in `GITHUB_TOKEN` commits review markdown back to this repo.
+
+---
+
+## Conductor
+
+Conductor is a second CLI in this repo (`src/conductor.ts`) for AI-driven software development workflows. It has three modes that chain together into a full plan → implement → review cycle.
+
+### How it works
+
+```
+conductor plan       →  creates GitHub issues from Claude's analysis of the repo
+conductor implement  →  implements each issue with a Claude Code subagent (creates branch + PR)
+conductor review     →  reviews each implementation PR with Claude and posts the review
+```
+
+All three commands use the `claude` CLI in headless mode (`--print --output-format json`). No Anthropic API key is required — auth is handled by the logged-in Claude Code session.
+
+GitHub operations in `plan` and `review` use the REST API directly via `curl` (no `gh` CLI dependency).
+
+### Quick start
+
+```bash
+npm install
+npm run build
+
+export GITHUB_TOKEN=ghp_...
+export CONDUCTOR_TARGET_REPO=owner/repo
+export CONDUCTOR_REPO_DIR=/path/to/local/checkout
+```
+
+#### 1. Plan — analyse the repo and create issues
+
+```bash
+npm run conductor:plan -- \
+  --max-issues 10 \
+  --plan-prompt "Find the most impactful bugs and missing features" \
+  --label conductor
+```
+
+Claude analyses the repository and creates up to `--max-issues` GitHub issues labelled `conductor`. Created issue numbers are written to `conductor-state/plan.json`.
+
+#### 2. Implement — resolve issues with subagents
+
+```bash
+npm run conductor:implement -- \
+  --batch-size 3 \
+  --token-budget 500000 \
+  --usage-threshold 90
+```
+
+For each open issue labelled `conductor`, a Claude Code subagent:
+1. Creates a branch `conductor/issue-<N>`
+2. Implements the changes
+3. Commits, pushes, and opens a PR with `Closes #N` in the body
+
+Progress is saved to `conductor-state/implement-<N>.json`. If `--token-budget` is set the loop stops when accumulated token usage reaches `--usage-threshold` percent (default 90 %).
+
+#### 3. Review — review the implementation PRs
+
+```bash
+npm run conductor:review -- \
+  --batch-size 5 \
+  --auto-approve
+```
+
+For each open PR labelled `conductor`, Claude reads the diff and posts a structured review. With `--auto-approve`, PRs that Claude approves are submitted as `APPROVE`; otherwise all reviews are posted as `COMMENT` or `REQUEST_CHANGES`.
+
+### All flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--target-repo` | `CONDUCTOR_TARGET_REPO` | `owner/repo` to operate on |
+| `--token` | `GITHUB_TOKEN` | GitHub PAT with `repo` scope |
+| `--model` | `claude-sonnet-4-6` | Claude model for all commands |
+| `--label` | `conductor` | Label used to find issues / PRs |
+| `--state-dir` | `conductor-state` | Directory for JSON state files |
+| `--token-budget` | `CONDUCTOR_TOKEN_BUDGET` | Total token budget (enables usage guard) |
+| `--usage-threshold` | `90` | Stop at this % of token budget |
+| `--max-issues` | `10` | *(plan)* Max issues to create |
+| `--plan-prompt` | `CONDUCTOR_PLAN_PROMPT` | *(plan)* Instruction for what to plan |
+| `--repo-dir` | `CONDUCTOR_REPO_DIR` | *(implement)* Local checkout path |
+| `--batch-size` | `3` / `5` | Items to process per run |
+| `--timeout-ms` | varies | Per-item Claude timeout |
+| `--auto-approve` | off | *(review)* Submit APPROVE when Claude approves |
