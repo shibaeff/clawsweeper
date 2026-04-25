@@ -214,8 +214,8 @@ interface ReconcileResult {
 }
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const TARGET_REPO = "openclaw/openclaw";
-const REPORT_REPO = "openclaw/clawsweeper";
+const TARGET_REPO = process.env.CLAWSWEEPER_TARGET_REPO ?? "openclaw/openclaw";
+const REPORT_REPO = process.env.CLAWSWEEPER_REPORT_REPO ?? "openclaw/clawsweeper";
 const CLAWHUB_URL = "https://clawhub.ai/";
 const DOCS_URL = "https://docs.openclaw.ai";
 const FRESH_DAYS = 7;
@@ -226,8 +226,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const STATUS_START = "<!-- clawsweeper-status:start -->";
 const STATUS_END = "<!-- clawsweeper-status:end -->";
 const DEFAULT_CODEX_MODEL = "gpt-5.5";
+const DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6";
 const DEFAULT_REASONING_EFFORT = "medium";
 const DEFAULT_SERVICE_TIER = "fast";
+const DEFAULT_RUNNER = "codex";
 const REVIEW_POLICY_VERSION = "2026-04-25-policy-v2";
 const PROTECTED_LABELS = new Set(["security", "beta-blocker", "release-blocker", "maintainer"]);
 const ALLOWED_REASONS = new Set<CloseReason>([
@@ -477,6 +479,7 @@ function reviewPolicyHash(options: {
   model?: string;
   reasoningEffort?: string;
   serviceTier?: string;
+  runner?: string;
 }): string {
   return sha256(
     stableJson({
@@ -485,6 +488,7 @@ function reviewPolicyHash(options: {
       model: options.model ?? DEFAULT_CODEX_MODEL,
       reasoningEffort: options.reasoningEffort ?? DEFAULT_REASONING_EFFORT,
       serviceTier: options.serviceTier ?? DEFAULT_SERVICE_TIER,
+      runner: options.runner ?? DEFAULT_RUNNER,
       prompt: readFileSync(join(ROOT, "prompts", "review-item.md"), "utf8"),
       schema: readFileSync(join(ROOT, "schema", "clawsweeper-decision.schema.json"), "utf8"),
     }),
@@ -1298,6 +1302,87 @@ function makeTreeReadOnly(path: string): void {
   chmodSync(path, 0o555);
 }
 
+function runClaude(options: {
+  item: Item;
+  context: ItemContext;
+  git: GitInfo;
+  model: string;
+  openclawDir: string;
+  reasoningEffort: string;
+  timeoutMs: number;
+  workDir: string;
+}): Decision {
+  ensureDir(options.workDir);
+  const promptPath = join(options.workDir, `${options.item.number}.prompt.md`);
+  writeFileSync(promptPath, promptFor(options.item, options.context, options.git), "utf8");
+  const dirtyBefore = openclawDirtyStatus(options.openclawDir);
+  if (dirtyBefore) {
+    throw new Error(
+      `OpenClaw checkout is dirty before reviewing #${options.item.number}:\n${dirtyBefore}`,
+    );
+  }
+  const schema = readFileSync(join(ROOT, "schema", "clawsweeper-decision.schema.json"), "utf8");
+  const result = spawnSync(
+    "claude",
+    [
+      "--print",
+      "--model",
+      options.model,
+      "--output-format",
+      "json",
+      "--json-schema",
+      schema,
+      "--permission-mode",
+      "bypassPermissions",
+      "--no-session-persistence",
+      readFileSync(promptPath, "utf8"),
+    ],
+    {
+      cwd: options.openclawDir,
+      encoding: "utf8",
+      env: codexEnv(),
+      maxBuffer: 128 * 1024 * 1024,
+      timeout: options.timeoutMs,
+    },
+  );
+  const dirtyAfter = openclawDirtyStatus(options.openclawDir);
+  if (dirtyAfter) {
+    throw new Error(
+      `Claude dirtied the OpenClaw checkout while reviewing #${options.item.number}:\n${dirtyAfter}`,
+    );
+  }
+  if (result.error) {
+    throw new Error(
+      `Claude review failed for #${options.item.number}: ${result.error.message}\n${
+        result.stderr.slice(-6000) || result.stdout.slice(-6000) || "No output."
+      }`,
+    );
+  }
+  if (result.status !== 0) {
+    throw new Error(
+      `Claude review failed for #${options.item.number} with exit ${
+        result.status ?? "unknown"
+      }.\n${result.stderr.slice(-6000) || result.stdout.slice(-6000) || "No output."}`,
+    );
+  }
+  try {
+    const envelope = JSON.parse(result.stdout.trim()) as Record<string, unknown>;
+    if (envelope.is_error) {
+      throw new Error(
+        `Claude returned an error result: ${typeof envelope.result === "string" ? envelope.result : JSON.stringify(envelope.result)}`,
+      );
+    }
+    const raw = envelope.result;
+    return (typeof raw === "string" ? JSON.parse(raw) : raw) as Decision;
+  } catch (error) {
+    throw new Error(
+      `Claude review wrote invalid JSON for #${options.item.number}: ${
+        error instanceof Error ? error.message : String(error)
+      }\nstdout: ${result.stdout.slice(-3000)}`,
+    );
+  }
+}
+
 function runCodex(options: {
   item: Item;
   context: ItemContext;
@@ -2066,7 +2151,9 @@ function reviewCommand(args: Args): void {
   const itemsDir = resolve(stringArg(args.items_dir, join(ROOT, "items")));
   const batchSize = numberArg(args.batch_size, 5);
   const maxPages = numberArg(args.max_pages, 250);
-  const model = stringArg(args.codex_model, DEFAULT_CODEX_MODEL);
+  const runner = stringArg(args.runner, DEFAULT_RUNNER);
+  const defaultModel = runner === "claude" ? DEFAULT_CLAUDE_MODEL : DEFAULT_CODEX_MODEL;
+  const model = stringArg(args.codex_model, defaultModel);
   const reasoningEffort = stringArg(args.codex_reasoning_effort, DEFAULT_REASONING_EFFORT);
   const serviceTier = stringArg(args.codex_service_tier, DEFAULT_SERVICE_TIER);
   const timeoutMs = numberArg(args.codex_timeout_ms, 600_000);
@@ -2088,7 +2175,7 @@ function reviewCommand(args: Args): void {
   }
   ensureDir(artifactDir);
   const git = gitInfo(openclawDir);
-  const reviewPolicy = reviewPolicyHash({ model, reasoningEffort, serviceTier });
+  const reviewPolicy = reviewPolicyHash({ model, reasoningEffort, serviceTier, runner });
   if (readonlyOpenclaw) makeTreeReadOnly(openclawDir);
   const selectionOptions: Parameters<typeof selectCandidates>[0] = {
     batchSize,
@@ -2117,22 +2204,35 @@ function reviewCommand(args: Args): void {
     const snapshotHash = itemSnapshotHash(item, context);
     let decision: Decision;
     try {
-      decision = runCodex({
-        item,
-        context,
-        git,
-        model,
-        openclawDir,
-        reasoningEffort,
-        serviceTier,
-        timeoutMs,
-        workDir: join(artifactDir, "codex"),
-      });
+      if (runner === "claude") {
+        decision = runClaude({
+          item,
+          context,
+          git,
+          model,
+          openclawDir,
+          reasoningEffort,
+          timeoutMs,
+          workDir: join(artifactDir, "claude"),
+        });
+      } else {
+        decision = runCodex({
+          item,
+          context,
+          git,
+          model,
+          openclawDir,
+          reasoningEffort,
+          serviceTier,
+          timeoutMs,
+          workDir: join(artifactDir, "codex"),
+        });
+      }
     } catch (error) {
       decision = codexFailureDecision(
         null,
         error instanceof Error ? error.message : String(error),
-        "Per-item Codex failure; continuing with the rest of the shard.",
+        `Per-item ${runner} failure; continuing with the rest of the shard.`,
       );
     }
     const action = reviewActionForDecision({ item, decision, git });
