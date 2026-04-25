@@ -205,15 +205,6 @@ interface ApplyResult {
   reason: string;
 }
 
-interface AnthropicRateLimits {
-  inputTokensLimit: number;
-  inputTokensRemaining: number;
-  inputTokensResetAt: string;
-  outputTokensLimit: number;
-  outputTokensRemaining: number;
-  usedInputPct: number;
-}
-
 interface ReconcileResult {
   openItemsSeen: number;
   pagesScanned: number;
@@ -1311,62 +1302,6 @@ function makeTreeReadOnly(path: string): void {
   chmodSync(path, 0o555);
 }
 
-function extractHeader(rawHeaders: string, name: string): string | null {
-  const match = new RegExp(`^${name}:\\s*(.+)$`, "im").exec(rawHeaders);
-  return match ? (match[1] ?? "").trim() : null;
-}
-
-function fetchAnthropicRateLimits(model: string): AnthropicRateLimits | null {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
-  const probe = spawnSync(
-    "curl",
-    [
-      "-s",
-      "-D",
-      "-",
-      "-o",
-      "/dev/null",
-      "-X",
-      "POST",
-      "-H",
-      `x-api-key: ${apiKey}`,
-      "-H",
-      "anthropic-version: 2023-06-01",
-      "-H",
-      "content-type: application/json",
-      "-d",
-      JSON.stringify({
-        model,
-        max_tokens: 1,
-        messages: [{ role: "user", content: "." }],
-      }),
-      "https://api.anthropic.com/v1/messages",
-    ],
-    { encoding: "utf8", timeout: 15_000 },
-  );
-  if (probe.error || probe.status !== 0) return null;
-  const h = probe.stdout;
-  const inputLimit = parseInt(extractHeader(h, "anthropic-ratelimit-input-tokens-limit") ?? "0");
-  const inputRemaining = parseInt(
-    extractHeader(h, "anthropic-ratelimit-input-tokens-remaining") ?? "0",
-  );
-  const inputResetAt = extractHeader(h, "anthropic-ratelimit-input-tokens-reset") ?? "";
-  const outputLimit = parseInt(extractHeader(h, "anthropic-ratelimit-output-tokens-limit") ?? "0");
-  const outputRemaining = parseInt(
-    extractHeader(h, "anthropic-ratelimit-output-tokens-remaining") ?? "0",
-  );
-  if (!inputLimit) return null;
-  return {
-    inputTokensLimit: inputLimit,
-    inputTokensRemaining: inputRemaining,
-    inputTokensResetAt: inputResetAt,
-    outputTokensLimit: outputLimit,
-    outputTokensRemaining: outputRemaining,
-    usedInputPct: ((inputLimit - inputRemaining) / inputLimit) * 100,
-  };
-}
-
 function runClaude(options: {
   item: Item;
   context: ItemContext;
@@ -1376,7 +1311,7 @@ function runClaude(options: {
   reasoningEffort: string;
   timeoutMs: number;
   workDir: string;
-}): Decision {
+}): { decision: Decision; tokensUsed: number } {
   ensureDir(options.workDir);
   const promptPath = join(options.workDir, `${options.item.number}.prompt.md`);
   writeFileSync(promptPath, promptFor(options.item, options.context, options.git), "utf8");
@@ -1438,7 +1373,14 @@ function runClaude(options: {
       );
     }
     const raw = envelope.result;
-    return (typeof raw === "string" ? JSON.parse(raw) : raw) as Decision;
+    const decision = (typeof raw === "string" ? JSON.parse(raw) : raw) as Decision;
+    const u = asRecord(envelope.usage);
+    const tokensUsed =
+      (Number(u.input_tokens) || 0) +
+      (Number(u.output_tokens) || 0) +
+      (Number(u.cache_read_input_tokens) || 0) +
+      (Number(u.cache_creation_input_tokens) || 0);
+    return { decision, tokensUsed };
   } catch (error) {
     throw new Error(
       `Claude review wrote invalid JSON for #${options.item.number}: ${
@@ -2261,20 +2203,22 @@ function reviewCommand(args: Args): void {
     JSON.stringify({ shardIndex, shardCount, scannedPages, candidates, reviewPolicy }, null, 2),
   );
   const usageThreshold = numberArg(args.usage_threshold, 90);
+  const tokenBudget =
+    numberArg(args.token_budget, 0) ||
+    (process.env.CLAWSWEEPER_TOKEN_BUDGET ? parseInt(process.env.CLAWSWEEPER_TOKEN_BUDGET) : 0);
+  let accumulatedTokens = 0;
   let completed = 0;
   for (const item of candidates) {
-    if (runner === "claude" && usageThreshold > 0) {
-      const limits = fetchAnthropicRateLimits(model);
-      if (limits) {
+    if (runner === "claude" && usageThreshold > 0 && tokenBudget > 0) {
+      const usedPct = (accumulatedTokens / tokenBudget) * 100;
+      console.error(
+        `[review] Claude session usage: ${usedPct.toFixed(1)}% (${accumulatedTokens}/${tokenBudget} tokens)`,
+      );
+      if (usedPct >= usageThreshold) {
         console.error(
-          `[review] Claude usage: ${limits.usedInputPct.toFixed(1)}% of ${limits.inputTokensLimit} input tokens (resets ${limits.inputTokensResetAt})`,
+          `[review] Usage threshold ${usageThreshold}% reached, stopping after ${completed} items.`,
         );
-        if (limits.usedInputPct >= usageThreshold) {
-          console.error(
-            `[review] Usage threshold ${usageThreshold}% reached, stopping after ${completed} items.`,
-          );
-          break;
-        }
+        break;
       }
     }
     console.error(
@@ -2285,7 +2229,7 @@ function reviewCommand(args: Args): void {
     let decision: Decision;
     try {
       if (runner === "claude") {
-        decision = runClaude({
+        const claudeResult = runClaude({
           item,
           context,
           git,
@@ -2295,6 +2239,8 @@ function reviewCommand(args: Args): void {
           timeoutMs,
           workDir: join(artifactDir, "claude"),
         });
+        decision = claudeResult.decision;
+        accumulatedTokens += claudeResult.tokensUsed;
       } else {
         decision = runCodex({
           item,
