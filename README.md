@@ -1,161 +1,68 @@
-# ClawSweeper
+# clawsweeper
 
-ClawSweeper is a conservative OpenClaw maintainer bot. It reviews open issues and PRs in `openclaw/openclaw`, writes one regenerated markdown record per open item, and closes only when the evidence is strong.
-
-Allowed close reasons:
-
-- already implemented on `main`
-- cannot reproduce on current `main`
-- belongs on ClawHub as a skill/plugin, not in core
-- too incoherent to be actionable
-- stale issue older than 60 days with insufficient data to verify the bug
-
-Everything else stays open.
-
-## Dashboard
-
-Last dashboard update: Apr 25, 2026, 18:48 UTC
-
-<!-- clawsweeper-status:start -->
-### Workflow Status
-
-Updated: Apr 25, 2026, 18:56 UTC
-
-State: Apply throttled
-
-Checkpoint 3. GitHub throttled while applying close decisions. Progress: 10/50 fresh closes, 11/1000 processed records in this apply chunk. Last throttled command: `gh api repos/openclaw/openclaw/issues/69162`. Retry 5/11 in 480s.
-Run: [https://github.com/openclaw/clawsweeper/actions/runs/24937779720](https://github.com/openclaw/clawsweeper/actions/runs/24937779720)
-<!-- clawsweeper-status:end -->
-
-| Metric | Count |
-| --- | ---: |
-| Open issues in [openclaw/openclaw](https://github.com/openclaw/openclaw) | 5781 |
-| Fresh reviewed issues in the last 7 days | 5679 |
-| Proposed issue closes | 259 (4.6% of reviewed issues) |
-| Open PRs in [openclaw/openclaw](https://github.com/openclaw/openclaw) | 4450 |
-| Fresh reviewed PRs in the last 7 days | 4295 |
-| Proposed PR closes | 44 (1% of reviewed PRs) |
-| Open items total | 10231 |
-| Reviewed files | 10146 |
-| Unreviewed open items | 85 |
-| Archived closed files | 9106 |
-| Fresh verified reviews in the last 7 days | 9974 |
-| Proposed closes awaiting apply | 303 (3% of fresh reviews) |
-| Closed by Codex apply | 7205 |
-| Failed or stale reviews | 172 |
-| Daily cadence coverage | 6919/7367 current (448 due, 93.9%) |
-| Daily PR cadence | 4180/4381 current (201 due, 95.4%) |
-| Daily new issue cadence (<30d) | 2739/2986 current (247 due, 91.7%) |
-| Weekly older issue cadence | 2779/2779 current (0 due, 100%) |
-| Due now by cadence | 533 |
-
-Recently reviewed:
-
-| Item | Title | Outcome | Status | Reviewed |
-| --- | --- | --- | --- | --- |
-| [#59868](https://github.com/openclaw/openclaw/issues/59868) | edit tool shows false positive error when oldText match fails after file was already fixed | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59868.md) | complete | Apr 25, 2026, 18:42 UTC |
-| [#59910](https://github.com/openclaw/openclaw/issues/59910) | Inbound images from Slack exceed Anthropic 5MB base64 limit (no auto-resize) | [close / proposed_close](https://github.com/openclaw/clawsweeper/blob/main/items/59910.md) | complete | Apr 25, 2026, 18:41 UTC |
-| [#59307](https://github.com/openclaw/openclaw/issues/59307) | Regression 2026.3.31: embedded agent calls read tool without path during heartbeat polls | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59307.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:40 UTC |
-| [#59913](https://github.com/openclaw/openclaw/issues/59913) | OpenAI compat gateway images bypass sanitization/resize, hit Anthropic 5MB limit | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59913.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:40 UTC |
-| [#59545](https://github.com/openclaw/openclaw/issues/59545) | [Bug]: macOS app General settings rewrites ~/.openclaw/openclaw.json without user changes | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59545.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:40 UTC |
-| [#59784](https://github.com/openclaw/openclaw/issues/59784) | [Bug]: Subscription quota limit (\"You've hit your limit\") classified as billing error, blocks model fallback | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59784.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:40 UTC |
-| [#59872](https://github.com/openclaw/openclaw/issues/59872) | Agent repeatedly uses web_fetch for Twitter/X URLs despite documented alternatives — needs tool-level domain routing | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59872.md) | complete | Apr 25, 2026, 18:39 UTC |
-| [#60661](https://github.com/openclaw/openclaw/pull/60661) | Keep gateway CLI timeout client-side after accepted runs | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/60661.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59576](https://github.com/openclaw/openclaw/issues/59576) | Mattermost: bot does not see file attachments (file_ids empty in WebSocket event) | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59576.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59514](https://github.com/openclaw/openclaw/issues/59514) | feat: support Bearer token auth for Bedrock gateway proxies | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59514.md) | complete | Apr 25, 2026, 18:39 UTC |
-| [#59361](https://github.com/openclaw/openclaw/issues/59361) | [Bug]: openclaw agent exits 0 with no output on v2026.3.31; lobster CLI unregistered as command | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59361.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59744](https://github.com/openclaw/openclaw/issues/59744) | Discord inbound attachments lose original filename (saved as UUID) | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59744.md) | complete | Apr 25, 2026, 18:39 UTC |
-| [#59788](https://github.com/openclaw/openclaw/issues/59788) | [Feature]: Start and persist routed agent sessions from outbound WhatsApp sends | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59788.md) | complete | Apr 25, 2026, 18:39 UTC |
-| [#59806](https://github.com/openclaw/openclaw/issues/59806) | Bug: Feishu plugin fails with 'Cannot destructure property tenant_access_token' | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59806.md) | complete | Apr 25, 2026, 18:39 UTC |
-| [#59881](https://github.com/openclaw/openclaw/issues/59881) | Plugin hook ctx.channelId returns provider name instead of actual channel ID | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59881.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59727](https://github.com/openclaw/openclaw/issues/59727) | CI/CD: Refactor complex workflow matrices into reusable workflows and JSON configs | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59727.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59730](https://github.com/openclaw/openclaw/issues/59730) | Testing: Consolidate multiple Vitest config files into unified configuration | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59730.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59888](https://github.com/openclaw/openclaw/issues/59888) | [Bug]: WhatsApp web-auto-reply dispatches stale/cached reply to subsequent inbound message (5ms response, no LLM call) | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59888.md) | complete | Apr 25, 2026, 18:39 UTC |
-| [#59871](https://github.com/openclaw/openclaw/issues/59871) | [Bug]: [Bug] TUI renders internal command envelopes to operator; async completion events inject verbose agent instructions into session transcript | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59871.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-| [#59509](https://github.com/openclaw/openclaw/issues/59509) | feat: support per-model location override for google-vertex provider | [keep_open / kept_open](https://github.com/openclaw/clawsweeper/blob/main/items/59509.md) | stale_local_checkout_blocked | Apr 25, 2026, 18:39 UTC |
-
-## How It Works
-
-The normal workflow is proposal-only. It runs configurable parallel shards and never comments or closes unless `apply_closures=true` is explicitly set for a manual run.
-
-Each review job:
-
-1. Checks out this repo.
-2. Uses a planner job that scans open items, prioritizes due activity, and hands explicit item-number batches to review shards.
-3. Checks out `openclaw/openclaw` at `main`, with cached git objects for faster startup.
-4. Runs Codex with `gpt-5.5`, medium reasoning, fast service tier, and a 10-minute per-item timeout inside the OpenClaw checkout.
-5. Writes `items/<number>.md` with the decision, proposed close comment, and a GitHub snapshot hash.
-6. Marks high-confidence allowed close decisions as `proposed_close`.
-
-Codex runs without GitHub write tokens. The runner checks the OpenClaw checkout before every review, makes the checkout read-only in CI, checks it again after review, and fails the item if Codex leaves any tracked or untracked change behind.
-
-Parallel workflow shards only receive planned item numbers. The planner posts a best-effort workflow status note to this README before shards start, each shard emits `[review]` progress lines, and the final job merges artifacts and updates the dashboard. Review jobs time out after 75 minutes so one stuck shard cannot hold the review concurrency group indefinitely. If the planner filled the current worker capacity, the publish job dispatches the next proposal-only sweep automatically. Review cadence is daily for items with activity since the last stored snapshot, all PRs, and issues younger than 30 days. Older inactive issues are reviewed weekly. When more items are due than fit in a run, the planner prioritizes active items first, then PRs, then new issues, then older weekly reviews. The dashboard reports local cadence coverage for daily PRs, daily new issues, and weekly older issues; activity-based promotion is applied by the planner while scanning GitHub snapshots.
-
-To close later without rerunning Codex, dispatch the workflow with `apply_existing=true`. That mode reads existing `items/*.md`, refetches the issue/PR context, recomputes the snapshot hash, and only comments/closes if nothing changed since the proposal was written. Successfully closed or already-closed items move to `closed/<number>.md`; `items/` stays focused on open items that still need tracking. Folder reconciliation also compares tracked files with the current GitHub open set: externally closed items move from `items/` to `closed/`, and reopened archived items move back to `items/` as stale so the planner reviews them again. Apply runs update the dashboard when each checkpoint commits, cap total processed items separately from fresh closes, leave enough scan room to skip changed or already-closed records while still reaching fresh closures, and emit `[apply]` progress lines during long close batches. Apply mode also posts best-effort start/checkpoint/finish notes to the dashboard. When GitHub secondary throttling triggers a long retry sleep, apply mode posts a best-effort throttle heartbeat to the dashboard with the checkpoint, processed count, and next retry delay. Apply mode defaults to `apply_min_age_days=0`, `apply_kind=issue`, a 5-second close delay, 50 fresh closes per checkpoint commit, and long retry backoff for GitHub secondary write throttling, so issue cleanup can apply high-confidence closes regardless of age while PRs remain excluded. If an apply run reaches its requested close limit, it queues another apply run with the same settings.
-
-Maintainer-authored items are never auto-closed. Candidate planning and apply mode both read GitHub's `author_association` field and exclude `OWNER`, `MEMBER`, and `COLLABORATOR` items from automated close actions.
-
-## Local Run
-
-Requires Node 24.
-
-```bash
-source ~/.profile
-npm install
-npm run build
-npm run plan -- --batch-size 5 --shard-count 40 --max-pages 250 --codex-model gpt-5.5 --codex-reasoning-effort medium --codex-service-tier fast
-npm run review -- --openclaw-dir ../openclaw --batch-size 5 --max-pages 250 --artifact-dir artifacts/reviews --codex-model gpt-5.5 --codex-reasoning-effort medium --codex-service-tier fast --codex-timeout-ms 600000
-npm run apply-artifacts -- --artifact-dir artifacts/reviews
-npm run reconcile -- --dry-run
-```
-
-Apply unchanged proposals later:
-
-```bash
-source ~/.profile
-npm run apply-decisions -- --limit 20
-```
-
-Manual review runs can set `--apply-closures` or workflow input `apply_closures=true`, but the safer path is proposal first, then `apply_existing=true`.
-
-## Checks
-
-```bash
-npm run check
-npm run oxformat
-```
-
-`oxformat` is an alias for `oxfmt`; there is no separate `oxformat` npm package.
-
-## GitHub Actions Setup
-
-Required secrets:
-
-- `OPENAI_API_KEY`: OpenAI API key used to log Codex in before review shards run.
-- `CODEX_API_KEY`: optional compatibility alias for the same key during the login check.
-- `OPENCLAW_GH_TOKEN`: GitHub token with write access to `openclaw/openclaw` issues and PRs.
-
-The workflow logs Codex in with `OPENAI_API_KEY`, then runs review shards without OpenAI or Codex API key environment variables. `codex exec` uses the prepared login state, and the shard fails instead of writing fallback review markdown if Codex auth/output fails. It uses `OPENCLAW_GH_TOKEN` for `openclaw/openclaw` comments/closes. The built-in `GITHUB_TOKEN` commits review markdown back to this repo.
+Two AI-powered CLI tools for GitHub repository maintenance, both running Claude Code in headless mode with no Anthropic API key required.
 
 ---
 
-## Conductor
+## conductor
 
-Conductor is a second CLI in this repo (`src/conductor.ts`) for AI-driven software development workflows. It has three modes that chain together into a full plan → implement → review cycle.
-
-### How it works
+`conductor` is a plan / implement / review pipeline that uses Claude Code subagents to autonomously work a GitHub repo's issue backlog.
 
 ```
-conductor plan       →  creates GitHub issues from Claude's analysis of the repo
-conductor implement  →  implements each issue with a Claude Code subagent (creates branch + PR)
-conductor review     →  reviews each implementation PR with Claude and posts the review
+plan       →  Claude analyses the repo and creates GitHub issues via REST API
+implement  →  Claude Code subagents implement each issue, push a branch, open a PR
+review     →  Claude reviews each PR diff and posts a structured GitHub review
 ```
 
-All three commands use the `claude` CLI in headless mode (`--print --output-format json`). No Anthropic API key is required — auth is handled by the logged-in Claude Code session.
+### How it actually works
 
-GitHub operations in `plan` and `review` use the REST API directly via `curl` (no `gh` CLI dependency).
+**Plan** sends Claude a prompt about the target repo and asks it to return a JSON array of tasks. For each task it calls `POST /repos/{repo}/issues` directly using `curl` — no `gh` CLI, no extra dependencies. Issues get tagged with a label (default: `conductor`) so the other commands can find them.
+
+**Implement** fetches open issues with that label and for each one spawns a Claude Code subagent via `claude --print --output-format json --permission-mode bypassPermissions`. The subagent runs inside the local checkout with full tool access — it reads files, edits code, runs tests, commits, pushes, and opens a PR. Each run is independent; results are saved to `conductor-state/implement-<N>.json`.
+
+**Review** fetches open PRs, downloads each diff via the GitHub API, and sends it to Claude with a review prompt. Claude returns a structured JSON decision (`approve`, `request_changes`, or `comment`) plus a markdown review body, which gets posted to the PR via `POST /repos/{repo}/pulls/{pr}/reviews`.
+
+Token usage is tracked from the `usage` field in each Claude CLI JSON envelope. When `--token-budget` is set the loop stops before the next item if accumulated tokens / budget >= `--usage-threshold` (default 90%).
+
+### Live test — shibaeff/sample-python-service
+
+Ran against a fresh private repo seeded with a ~100-line Python todo service and test file.
+
+**Plan output (5 issues created, ~39k tokens):**
+
+```
+#1  Handle invalid item ID format with HTTP 400 instead of crashing
+#2  Return HTTP 400 on malformed JSON request body instead of crashing
+#3  Add PUT /items/<id> endpoint to update item done status
+#4  Fix test isolation: reset _next_id between test cases
+#5  Add thread safety with locks around shared mutable state
+```
+
+All five were real bugs and missing features in the seed code. Claude correctly identified that `int(path.split("/")[-1])` would throw an unhandled `ValueError` on non-integer IDs, that JSON parse errors propagated as 500s, that test cases shared global counter state, and that `HTTPServer` is single-threaded.
+
+**Implement output (3 issues, ~609k tokens total):**
+
+| Issue | PR | What the subagent did |
+|-------|----|-----------------------|
+| #5 thread safety | PR #6 | Added `threading.Lock()`, wrapped all `ITEMS` reads/writes, switched to `ThreadingHTTPServer` |
+| #4 test isolation | PR #7 | Added `reset_state()` to `app.py`, called it in `setUp`, added a new regression test |
+| #3 PUT endpoint | PR #8 | Implemented `do_PUT` with partial updates, input validation, locking, and 7 new test cases |
+
+Subagents ran sequentially, each taking a few minutes. They left working, committed code on `conductor/issue-N` branches with proper commit messages and `Closes #N` PR bodies.
+
+**Review output (3 PRs, ~195k tokens total):**
+
+Claude reviewed all three PRs and posted GitHub reviews. The most interesting catch on PR #8 (PUT endpoint):
+
+> *"There is one clear concurrency bug: in the 404 branch of `do_PUT`, `send_json` is called while `_lock` is still held, causing network I/O to block every other reader/writer of ITEMS for the duration of that write."*
+
+That's a real bug — the subagent that implemented the feature called `self.send_json(404, ...)` from inside a `with _lock:` block, which holds the lock across a network write. The reviewer caught it correctly.
+
+**Known gap:** implement subagents don't automatically apply the `--label conductor` to the PRs they create. Workaround: pass `--label ""` to `conductor:review` to review all open PRs, or add the label manually.
 
 ### Quick start
+
+Requires Node 24 and the `claude` CLI logged in.
 
 ```bash
 npm install
@@ -164,59 +71,120 @@ npm run build
 export GITHUB_TOKEN=ghp_...
 export CONDUCTOR_TARGET_REPO=owner/repo
 export CONDUCTOR_REPO_DIR=/path/to/local/checkout
+
+# Step 1 — create issues
+npm run conductor:plan -- --max-issues 10 --plan-prompt "find bugs and missing features"
+
+# Step 2 — implement them (3 at a time, stop at 90% of 500k token budget)
+npm run conductor:implement -- --batch-size 3 --token-budget 500000
+
+# Step 3 — review the PRs
+npm run conductor:review -- --batch-size 5
 ```
-
-#### 1. Plan — analyse the repo and create issues
-
-```bash
-npm run conductor:plan -- \
-  --max-issues 10 \
-  --plan-prompt "Find the most impactful bugs and missing features" \
-  --label conductor
-```
-
-Claude analyses the repository and creates up to `--max-issues` GitHub issues labelled `conductor`. Created issue numbers are written to `conductor-state/plan.json`.
-
-#### 2. Implement — resolve issues with subagents
-
-```bash
-npm run conductor:implement -- \
-  --batch-size 3 \
-  --token-budget 500000 \
-  --usage-threshold 90
-```
-
-For each open issue labelled `conductor`, a Claude Code subagent:
-1. Creates a branch `conductor/issue-<N>`
-2. Implements the changes
-3. Commits, pushes, and opens a PR with `Closes #N` in the body
-
-Progress is saved to `conductor-state/implement-<N>.json`. If `--token-budget` is set the loop stops when accumulated token usage reaches `--usage-threshold` percent (default 90 %).
-
-#### 3. Review — review the implementation PRs
-
-```bash
-npm run conductor:review -- \
-  --batch-size 5 \
-  --auto-approve
-```
-
-For each open PR labelled `conductor`, Claude reads the diff and posts a structured review. With `--auto-approve`, PRs that Claude approves are submitted as `APPROVE`; otherwise all reviews are posted as `COMMENT` or `REQUEST_CHANGES`.
 
 ### All flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--target-repo` | `CONDUCTOR_TARGET_REPO` | `owner/repo` to operate on |
-| `--token` | `GITHUB_TOKEN` | GitHub PAT with `repo` scope |
-| `--model` | `claude-sonnet-4-6` | Claude model for all commands |
-| `--label` | `conductor` | Label used to find issues / PRs |
-| `--state-dir` | `conductor-state` | Directory for JSON state files |
-| `--token-budget` | `CONDUCTOR_TOKEN_BUDGET` | Total token budget (enables usage guard) |
+| `--target-repo` | `CONDUCTOR_TARGET_REPO` env | `owner/repo` to operate on |
+| `--token` | `GITHUB_TOKEN` env | GitHub PAT with `repo` scope |
+| `--model` | `claude-sonnet-4-6` | Claude model |
+| `--label` | `conductor` | Label filter for issues / PRs |
+| `--state-dir` | `conductor-state` | Where to write JSON state files |
+| `--token-budget` | `CONDUCTOR_TOKEN_BUDGET` env | Total token budget; enables usage guard |
 | `--usage-threshold` | `90` | Stop at this % of token budget |
 | `--max-issues` | `10` | *(plan)* Max issues to create |
-| `--plan-prompt` | `CONDUCTOR_PLAN_PROMPT` | *(plan)* Instruction for what to plan |
-| `--repo-dir` | `CONDUCTOR_REPO_DIR` | *(implement)* Local checkout path |
-| `--batch-size` | `3` / `5` | Items to process per run |
-| `--timeout-ms` | varies | Per-item Claude timeout |
-| `--auto-approve` | off | *(review)* Submit APPROVE when Claude approves |
+| `--plan-prompt` | `CONDUCTOR_PLAN_PROMPT` env | *(plan)* What to look for |
+| `--timeout-ms` | `120000` | *(plan)* Claude timeout |
+| `--repo-dir` | `CONDUCTOR_REPO_DIR` env | *(implement)* Local checkout path |
+| `--batch-size` | `3` | *(implement)* Issues per run |
+| `--timeout-ms` | `600000` | *(implement)* Per-issue timeout |
+| `--batch-size` | `5` | *(review)* PRs per run |
+| `--auto-approve` | off | *(review)* Post APPROVE when Claude approves |
+| `--timeout-ms` | `300000` | *(review)* Per-PR timeout |
+
+---
+
+## clawsweeper
+
+`clawsweeper` is the original CLI in this repo. It scans all open issues and PRs in a target repository, reviews each one with an AI model, and proposes (or applies) closes for items that meet strict criteria.
+
+Allowed close reasons:
+
+- Already implemented on `main`
+- Cannot reproduce on current `main`
+- Too incoherent to be actionable
+- Stale with insufficient data (60+ days, no new info)
+
+Everything else stays open. It never closes without evidence.
+
+### Target repo config
+
+By default clawsweeper targets `openclaw/openclaw`. Override with env vars:
+
+```bash
+export CLAWSWEEPER_TARGET_REPO=owner/repo
+export CLAWSWEEPER_REPORT_REPO=owner/clawsweeper-fork
+```
+
+### Runners
+
+Two AI runners are supported:
+
+**Codex (default):** requires `OPENAI_API_KEY`.
+
+```bash
+npm run review -- --openclaw-dir ../myrepo --codex-model gpt-5.5
+```
+
+**Claude Code (headless, no API key):** uses the logged-in `claude` CLI session.
+
+```bash
+npm run review -- --runner claude --openclaw-dir ../myrepo
+```
+
+With `--runner claude`, the model defaults to `claude-sonnet-4-6`. Override with `--codex-model`.
+
+Token usage is tracked from the Claude CLI JSON output. Pass `--token-budget` and `--usage-threshold` to stop the review loop before exhausting your session quota:
+
+```bash
+npm run review -- --runner claude --openclaw-dir ../myrepo \
+  --token-budget 500000 --usage-threshold 85
+```
+
+### Full local run
+
+```bash
+npm install
+npm run build
+
+# Plan which items need review
+npm run plan -- --batch-size 5 --shard-count 40 --max-pages 250
+
+# Review them
+npm run review -- --openclaw-dir ../myrepo --artifact-dir artifacts/reviews \
+  --runner claude --token-budget 500000
+
+# Merge artifact files into items/
+npm run apply-artifacts -- --artifact-dir artifacts/reviews
+
+# Apply pending close proposals (careful — this writes to GitHub)
+npm run apply-decisions -- --limit 20
+
+# Dry-run reconcile closed/reopened items
+npm run reconcile -- --dry-run
+```
+
+### Checks
+
+```bash
+npm run check      # build + lint + tests + format check
+npm run oxformat   # auto-format (alias for oxfmt)
+```
+
+### GitHub Actions secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `OPENAI_API_KEY` | Codex runner login |
+| `OPENCLAW_GH_TOKEN` | Write access to target repo for closing issues |
